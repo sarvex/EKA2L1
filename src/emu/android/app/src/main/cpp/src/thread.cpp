@@ -128,15 +128,19 @@ namespace eka2l1::android {
             while (screens) {
                 std::size_t change_handle = screens->add_screen_redraw_callback(&state, [](void *userdata,
                                                                                            eka2l1::epoc::screen *scr, const bool is_dsa) {
+                    
+                    LOG_ERROR(FRONTEND_CMDLINE, "Start the thing draw");
                     emulator *state_ptr = reinterpret_cast<emulator*>(userdata);
                     if (!state_ptr->graphics_driver) {
                         return;
                     }
 
+                    LOG_ERROR(FRONTEND_CMDLINE, "Wait for the thing draw");
                     // Check if previous presenting is done yet (to prevent input delay because frame
                     // submit request is too fast)
                     state_ptr->graphics_driver->wait_for(&state_ptr->present_status);
 
+                    LOG_ERROR(FRONTEND_CMDLINE, "Done waiting draw");
                     drivers::graphics_command_builder builder;
                     state_ptr->launcher->draw(builder, scr, state_ptr->window->window_fb_size().x,
                                               state_ptr->window->window_fb_size().y);
@@ -151,6 +155,7 @@ namespace eka2l1::android {
                     state_ptr->graphics_driver->submit_command_list(retrieved);
                 });
 
+                LOG_ERROR(FRONTEND_CMDLINE, "Register this thingy");
                 state.screen_change_handles.push_back(change_handle);
                 screens = screens->next;
             }
