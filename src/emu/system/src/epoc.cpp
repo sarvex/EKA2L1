@@ -554,8 +554,8 @@ namespace eka2l1 {
         file_system_inst physical_fs = create_physical_filesystem(epocver::epoc94, "");
         physical_fs_id_ = io_->add_filesystem(physical_fs);
 
-        exmonitor = arm::create_exclusive_monitor(cpu_type, 1);
-        cpu = arm::create_core(exmonitor.get(), cpu_type);
+        exmonitor = arm::create_exclusive_monitor(arm_emulator_type::dyncom, 1);
+        cpu = arm::create_core(exmonitor.get(), arm_emulator_type::dyncom);
 
         kern_ = std::make_unique<kernel_system>(parent_, timing_.get(), io_.get(), conf_, app_settings_, &romf_, cpu.get(),
             disassembler_.get());
