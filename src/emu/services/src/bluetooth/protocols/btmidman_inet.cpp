@@ -331,7 +331,7 @@ namespace eka2l1::epoc::bt {
         if (discovery_mode_ == DISCOVERY_MODE_LOCAL_LAN) {
             LOG_WARN(SERVICE_BLUETOOTH, "Local address check request {}.{}.{}.{}", local_addr_.user_data_[0], local_addr_.user_data_[1], local_addr_.user_data_[2], local_addr_.user_data_[3]); 
             
-            char *test = (char*)(&(reinterpret_cast<const sockaddr_in*>(requester)->sin_addr);
+            char *test = (char*)(&(reinterpret_cast<const sockaddr_in*>(requester)->sin_addr));
             LOG_WARN(SERVICE_BLUETOOTH, "Send address check request {}.{}.{}.{}", test[0], test[1], test[2], test[3]); 
 
             
