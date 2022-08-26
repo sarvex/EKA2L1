@@ -54,7 +54,7 @@ namespace eka2l1::epoc::internet {
         if (!loop_thread_) {
             loop_thread_ = std::make_unique<std::thread>([&]() {
                 common::set_thread_name("UV socket looper thread");
-                common::set_thread_priority(common::thread_priority_high);
+                common::set_thread_priority(common::thread_priority_very_high);
 
                 while (uv_run(uv_default_loop(), UV_RUN_DEFAULT) == 0) {
                     std::this_thread::sleep_for(std::chrono::microseconds(5));
