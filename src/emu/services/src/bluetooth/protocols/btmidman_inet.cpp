@@ -98,6 +98,9 @@ namespace eka2l1::epoc::bt {
                 LOG_ERROR(SERVICE_BLUETOOTH, "Can't find local LAN interface for BT netplay!");
                 return;
             }
+            
+            LOG_WARN(SERVICE_BLUETOOTH, "Server address {}.{}.{}.{}", server_addr.user_data_[0], server_addr.user_data_[1], server_addr.user_data_[2], server_addr.user_data_[3]);
+            LOG_WARN(SERVICE_BLUETOOTH, "Local address {}.{}.{}.{}", local_addr_.user_data_[0], local_addr_.user_data_[1], local_addr_.user_data_[2], local_addr_.user_data_[3]); 
 
             local_addr_.port_ = static_cast<std::uint16_t>(port_);
         } else if (discovery_mode_ == DISCOVERY_MODE_PROXY_SERVER) {
@@ -326,6 +329,13 @@ namespace eka2l1::epoc::bt {
     // ca                               |   Answering a device discovery call.                           
     void midman_inet::handle_server_request(const sockaddr *requester, const void *buf_void, std::int64_t nread) {
         if (discovery_mode_ == DISCOVERY_MODE_LOCAL_LAN) {
+            LOG_WARN(SERVICE_BLUETOOTH, "Local address check request {}.{}.{}.{}", local_addr_.user_data_[0], local_addr_.user_data_[1], local_addr_.user_data_[2], local_addr_.user_data_[3]); 
+            
+            char *test = (char*)(&(reinterpret_cast<const sockaddr_in*>(requester)->sin_addr);
+            LOG_WARN(SERVICE_BLUETOOTH, "Send address check request {}.{}.{}.{}", test[0], test[1], test[2], test[3]); 
+
+            
+            
             if (memcmp(&(reinterpret_cast<const sockaddr_in*>(requester)->sin_addr), local_addr_.user_data_, 4) == 0) {
                 return;
             }
