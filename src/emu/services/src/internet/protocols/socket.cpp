@@ -840,6 +840,7 @@ namespace eka2l1::epoc::internet {
             uv_async_init(uv_default_loop(), async, [](uv_async_t *async) {
                 uv_tcp_write_task_info *task = reinterpret_cast<uv_tcp_write_task_info*>(async->data);
 
+                uv_tcp_nodelay(reinterpret_cast<uv_tcp_t*>(task->stream_), 1);
                 uv_write(task->write_, task->stream_, &task->buf_sent_, 1, [](uv_write_t *req, int status) {
                     reinterpret_cast<inet_socket*>(req->data)->complete_send_done_info(status);
                 });
