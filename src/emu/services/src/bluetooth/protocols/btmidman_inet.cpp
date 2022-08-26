@@ -99,7 +99,7 @@ namespace eka2l1::epoc::bt {
                 return;
             }
             
-            LOG_WARN(SERVICE_BLUETOOTH, "Server address {}.{}.{}.{}", server_addr.user_data_[0], server_addr.user_data_[1], server_addr.user_data_[2], server_addr.user_data_[3]);
+            LOG_WARN(SERVICE_BLUETOOTH, "Server address {}.{}.{}.{}", server_addr_.user_data_[0], server_addr_.user_data_[1], server_addr_.user_data_[2], server_addr_.user_data_[3]);
             LOG_WARN(SERVICE_BLUETOOTH, "Local address {}.{}.{}.{}", local_addr_.user_data_[0], local_addr_.user_data_[1], local_addr_.user_data_[2], local_addr_.user_data_[3]); 
 
             local_addr_.port_ = static_cast<std::uint16_t>(port_);
