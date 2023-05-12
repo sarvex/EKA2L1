@@ -21,29 +21,29 @@ import sys
 
 def read_target_info(common_path):
     target_path = os.path.join(common_path, 'target.inf')
-    
+
     try:
         list = []
         line_count = 0
-        
+
         with open(target_path, 'r') as target_file:
             while True:
                 line = target_file.readline()
-                
+
                 if line == '':
                     return list
-                
+
                 line_count += 1
                 target_info = line.split()
                 if len(target_info) < 2:
                     if len(target_info) == 1:
                         list.append((None, target_info[0]))
                     else:
-                        print('Line {}: Not enough target info'.format(line_count))
-                    
+                        print(f'Line {line_count}: Not enough target info')
+
                     continue
-                
-                
+
+
                 list.append((target_info[0], target_info[1]))
     except:
         print('Fail to open target info file!')
@@ -54,20 +54,20 @@ def main():
     common_path = root_path
 
     targets = read_target_info(common_path)
-    if targets == None:
+    if targets is None:
         print('No target available. Abort')
         return 0
-    
+
     for target in targets:
         (target_platform, sdk_name) = target
         target_path = root_path
-        
+
         if target_platform != None:
             target_path = os.path.join(target_path, target_platform + '\\')
-        
+
         argvs = ['stub', '--device', sdk_name, '--config', 'urel', '--result', '..', target_path]
         build.build_entry(argvs)
-    
+
     return 0
 
 if __name__ == '__main__':

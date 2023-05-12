@@ -34,43 +34,42 @@ def is_os_64bit():
 
 # Check if a build configuration string is valid
 def is_valid_build_config(config):
-    return (config == 'udeb') or (config == 'urel')
+    return config in ['udeb', 'urel']
 
 
 # Find the common files folder that store devices.xml
 def find_symbian_common_path():
-    if os.name == 'nt':
-        import winreg
-    
-        # Try to read register
-        reg = winreg.ConnectRegistry(None, winreg.HKEY_LOCAL_MACHINE)
-        
+    if os.name != 'nt':
+        # If it's not NT, there's no specific method... Maybe just returns empty
+        return ''
+    import winreg
+
+    # Try to read register
+    reg = winreg.ConnectRegistry(None, winreg.HKEY_LOCAL_MACHINE)
+
+    try:
+        key = winreg.OpenKey(reg, r'SOFTWARE\WOW6432Node\Symbian\EPOC SDKs')
+    except WindowsError:
+        # Try to open the key again but assuming it's 32-bit
         try:
-            key = winreg.OpenKey(reg, r'SOFTWARE\WOW6432Node\Symbian\EPOC SDKs')
+            key = winreg.OpenKey(reg, r'SOFTWARE\Symbian\EPOC SDKs')
         except WindowsError:
-            # Try to open the key again but assuming it's 32-bit
-            try:
-                key = winreg.OpenKey(reg, r'SOFTWARE\Symbian\EPOC SDKs')
-            except WindowsError:
-                key = None
-                
-        # If the key is not found
-        if key != None:
-            return winreg.QueryValueEx(key, 'CommonPath')[0]
-        
-        # Returns the default path then
-        if is_os_64bit():
-            return 'C:\Program Files (x86)\Common Files\Symbian'
-            
-        return 'C:\Program Files\Common Files\Symbian'
-    
-    # If it's not NT, there's no specific method... Maybe just returns empty
-    return ''
+            key = None
+
+    # If the key is not found
+    if key != None:
+        return winreg.QueryValueEx(key, 'CommonPath')[0]
+
+    # Returns the default path then
+    if is_os_64bit():
+        return 'C:\Program Files (x86)\Common Files\Symbian'
+
+    return 'C:\Program Files\Common Files\Symbian'
 
 
 def parse_devices(common_path):
     xml_path = common_path + '\devices.xml'
-    
+
     if not os.path.exists(xml_path):
         raise Exception("Can't find devices.xml!")
 
@@ -87,7 +86,7 @@ def parse_devices(common_path):
         is_default_text = device.getAttribute('default')
         is_default = (is_default_text.lower() == 'yes')
 
-        devices.append(((dvc_id + ':' + name), root.firstChild.data, is_default))
+        devices.append((f'{dvc_id}:{name}', root.firstChild.data, is_default))
 
     return devices
 
@@ -98,7 +97,7 @@ def set_default_device(common_path, target_device, old_device):
     if target_id == old_id:
         return
 
-    subprocess.call('devices -setdefault @' + target_id, stdout=subprocess.PIPE)
+    subprocess.call(f'devices -setdefault @{target_id}', stdout=subprocess.PIPE)
 
 def get_default_device(devices):
     if len(devices) == 0:
@@ -165,7 +164,7 @@ def parse_system_arguments(common_path, argvs):
                         break
 
                 if not found:
-                    print('No device found with name: {}'.format(argvs[argpointer]))
+                    print(f'No device found with name: {argvs[argpointer]}')
                     should_continue = False
 
                     return [None, None, None, None, None, False]
@@ -175,8 +174,9 @@ def parse_system_arguments(common_path, argvs):
 
             # Is it valid...
             if not is_valid_build_config(configuration):
-                raise Exception('{} is not a valid build configuration!\n Valid build configurations: udeb, urel'.
-                                format(configuration))
+                raise Exception(
+                    f'{configuration} is not a valid build configuration!\n Valid build configurations: udeb, urel'
+                )
         elif command == '--result':
             argpointer += 1
             build_result_folder = argvs[argpointer]
@@ -222,7 +222,7 @@ def should_generate_abld_makefile(mmp_full_path, plat):
     (folder, mmp_filename) = os.path.split(mmp_full_path)
     (mmp_name, ext) = os.path.splitext(mmp_filename)
 
-    abld_makefile_name = '{}\\{}.{}'.format(plat, mmp_name, plat).upper()
+    abld_makefile_name = f'{plat}\\{mmp_name}.{plat}'.upper()
     abld_makefile_path = os.path.join(mmp_build_folder, abld_makefile_name)
 
     if not os.path.exists(abld_makefile_path):
@@ -236,7 +236,7 @@ def should_generate_abld_makefile(mmp_full_path, plat):
 
 
 def invoke_abld_command(command):
-    print('Invoke ABLD command {}'.format(command))
+    print(f'Invoke ABLD command {command}')
     result = subprocess.Popen(['abld.bat'] + command, stdout=subprocess.PIPE)
     result.communicate()
 
@@ -284,11 +284,7 @@ def parse_bld_file(group_path):
 
     if not build_platform or build_platform.upper() == 'DEFAULT':
         # Use our default platform
-        if get_sdk_is_eka1():
-            build_platform = 'armi'
-        else:
-            build_platform = 'GCCE'
-
+        build_platform = 'armi' if get_sdk_is_eka1() else 'GCCE'
     return [build_platform, mmp_files]
 
 
@@ -313,7 +309,7 @@ def build(group_folder, configuration):
         mmp_file_full_path = os.path.join(group_folder, mmp_file)
 
         if not os.path.exists(mmp_file_full_path):
-            raise Exception('MMP file {} declared in bld.inf does not exist!'.format(mmp_file))
+            raise Exception(f'MMP file {mmp_file} declared in bld.inf does not exist!')
 
         (mmp_filename, ext) = os.path.splitext(mmp_file)
 
@@ -349,7 +345,7 @@ def copy_build_result(group_folder, configuration, folder):
         (drive, group_folder_abs) = os.path.splitdrive(group_folder)
         binary_folder = os.path.join(drive, os.environ['EPOCROOT'], 'epoc32\\release\\')
 
-        inside_folder_name = '{}\\{}\\'.format(build_platform.upper(), configuration)
+        inside_folder_name = f'{build_platform.upper()}\\{configuration}\\'
 
         original_build_folder = os.path.join(binary_folder, inside_folder_name)
         target_build_folder = folder
@@ -360,7 +356,7 @@ def copy_build_result(group_folder, configuration, folder):
         except OSError:
             pass
 
-        mmp_name = '{}.dll'.format(mmp_name)
+        mmp_name = f'{mmp_name}.dll'
         source_mmp_name = os.path.join(original_build_folder, mmp_name)
         target_mmp_name = os.path.join(target_build_folder, mmp_name)
 
@@ -389,7 +385,7 @@ def build_entry(argvs):
         # Remove device letters because all the tools dont like it
         (drive, abs_path) = os.path.splitdrive(device[1])
         (group_drive, abs_path_drive) = os.path.splitdrive(group_folder)
-        
+
         if drive.lower() != group_drive.lower():
             print('Drive of the SDK versus drive of the project to build are not the same')
             return 0
@@ -408,10 +404,10 @@ def build_entry(argvs):
         time_start_build = timeit.default_timer()
         build(group_folder, configuration)
 
-        print('Build finished in {} seconds'.format(timeit.default_timer() - time_start_build))
+        print(f'Build finished in {timeit.default_timer() - time_start_build} seconds')
 
         if result_folder:
-            print('Copy build results to {}'.format(os.path.abspath(result_folder)))
+            print(f'Copy build results to {os.path.abspath(result_folder)}')
             copy_build_result(group_folder, configuration, result_folder)
     except Exception as e:
         print(e)
